@@ -48,4 +48,4 @@ im = ax.imshow(heatmap_gap,
 cbar = ax.figure.colorbar(im, ax = ax)
 cbar.ax.set_ylabel("Color bar", rotation = -90, va = "bottom")
 # plt.show()
-plt.savefig("heatmap_pec-wins.png")
+plt.savefig("heatmap_pec-wins_Gamma_allowed_"+str(Gamma_allowed)+".png")
