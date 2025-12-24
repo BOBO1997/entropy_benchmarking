@@ -54,9 +54,9 @@ with open("run_classical.pkl", "rb") as f:
     energy_classical_lower = run_classical["energy_classical_lower"]
     # energy_classical_upper = run_classical["energy_classical_upper"] ### very close to energy_theoretical
 
-gap = np.abs(energy_theoretical - energy_classical_lower)
-E_minus = energy_theoretical - gap / 2
-E_plus = energy_theoretical + gap / 2
+# gap = np.abs(energy_theoretical - energy_classical_lower)
+E_minus = energy_theoretical - gap
+E_plus = energy_theoretical + gap
 energy_mid = energy_theoretical
 
 # E_minus = energy_classical_lower

@@ -64,25 +64,37 @@ energy_mid = energy_theoretical
 # energy_mid = (energy_classical_lower + energy_classical_upper) / 2
 # energy_mid = energy_theoretical # energy_classical_lower + np.abs(energy_theoretical - energy_classical_lower) / 2
 
-deltas_2d = []
+deltas_2d_raw = []
+deltas_2d_pec = []
 for N_shots in Ns_shots:
-    deltas = []
+    deltas_raw = []
+    deltas_pec = []
     for p in ps_dep_global:
+
         P = 1 - (1 - p) ** num_layers
         dm_depolarised = (1 - P) * dm_theoretical + P * np.identity(2 ** num_qubits) / (2 ** num_qubits)
         assert dm_depolarised.is_valid()
         variance_base = np.abs((dm_depolarised @ (matrix_Heisenberg ** 2)).trace() - (dm_depolarised @ matrix_Heisenberg).trace() ** 2)
         overhead_pec = (1 + 3/2 * p) ** (2 * num_layers)
-        delta = area_gaussian_outside(mu=energy_theoretical,
-                                      var=variance_base * overhead_pec / N_shots / Gamma_allowed,
-                                      E_minus=E_minus,
-                                      E_plus=E_plus)
-        deltas.append(delta)
-    deltas_2d.append(deltas)
+
+        delta_raw = area_gaussian_outside(mu=((1 - p) ** num_layers) * energy_theoretical,
+                                          var=variance_base / N_shots,
+                                          E_minus=E_minus,
+                                          E_plus=E_plus)
+        
+        delta_pec = area_gaussian_outside(mu=energy_theoretical,
+                                          var=variance_base * overhead_pec / N_shots / Gamma_allowed,
+                                          E_minus=E_minus,
+                                          E_plus=E_plus)
+        deltas_pec.append(delta_pec)
+        deltas_raw.append(delta_raw)
+    deltas_2d_pec.append(deltas_pec)
+    deltas_2d_raw.append(deltas_raw)
 
 
-with open("run_pec.pkl", "wb") as f:
-    pickle.dump(obj={"deltas_2d": np.array(deltas_2d),
+with open("run_raw_pec.pkl", "wb") as f:
+    pickle.dump(obj={"deltas_2d_raw": np.array(deltas_2d_raw),
+                     "deltas_2d_pec": np.array(deltas_2d_pec),
                      "datetime": datetime.now(ZoneInfo("Europe/Paris")),
                     },
                 file=f)
