@@ -1,2 +1,1 @@
-# grustphix
 # entropy_benchmarking_with_finite_shot
