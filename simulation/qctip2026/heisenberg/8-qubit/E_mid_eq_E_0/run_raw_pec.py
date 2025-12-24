@@ -65,8 +65,11 @@ energy_mid = energy_theoretical
 # energy_mid = energy_theoretical # energy_classical_lower + np.abs(energy_theoretical - energy_classical_lower) / 2
 
 deltas_2d_raw = []
-deltas_2d_pec = []
+deltas_3d_pec = []
 for N_shots in Ns_shots:
+    print("N_shots:", N_shots)
+    t1 = time.perf_counter()
+
     deltas_raw = []
     deltas_pec = []
     for p in ps_dep_global:
@@ -81,20 +84,29 @@ for N_shots in Ns_shots:
                                           var=variance_base / N_shots,
                                           E_minus=E_minus,
                                           E_plus=E_plus)
+        deltas_Gamma = []
+        for Gamma_allowed in Gammas_allowed:
+            delta_pec = area_gaussian_outside(mu=energy_theoretical,
+                                            var=variance_base * overhead_pec / N_shots / Gamma_allowed,
+                                            E_minus=E_minus,
+                                            E_plus=E_plus)
+            deltas_Gamma.append(delta_pec)
         
-        delta_pec = area_gaussian_outside(mu=energy_theoretical,
-                                          var=variance_base * overhead_pec / N_shots / Gamma_allowed,
-                                          E_minus=E_minus,
-                                          E_plus=E_plus)
-        deltas_pec.append(delta_pec)
         deltas_raw.append(delta_raw)
-    deltas_2d_pec.append(deltas_pec)
-    deltas_2d_raw.append(deltas_raw)
+        deltas_pec.append(deltas_Gamma)
 
+    deltas_2d_raw.append(deltas_raw)
+    deltas_3d_pec.append(deltas_pec)
+
+    t2 = time.perf_counter()
+    print(t2 - t1, "s")
+    print()
+
+# deltas_3d_pec = np.transpose(deltas_3d_pec, (2, 0, 1))
 
 with open("run_raw_pec.pkl", "wb") as f:
     pickle.dump(obj={"deltas_2d_raw": np.array(deltas_2d_raw),
-                     "deltas_2d_pec": np.array(deltas_2d_pec),
+                     "deltas_3d_pec": np.array(deltas_3d_pec),
                      "datetime": datetime.now(ZoneInfo("Europe/Paris")),
                     },
                 file=f)
