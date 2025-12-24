@@ -6,7 +6,7 @@ num_qubits = 8
 
 num_layers = 9
 
-Gamma_allowed = 1.0
+Gamma_allowed = 1.5
 # Gammas_allowed = np.array([1.1,])
 
 Ns_shots = np.logspace(0, 7, num=100)

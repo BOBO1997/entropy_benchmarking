@@ -51,13 +51,18 @@ dm_theoretical = DMExtended(statevector_to_dm(state_ground_theoretical))
 with open("run_classical.pkl", "rb") as f:
     run_classical = pickle.load(f)
     energy_classical_lower = run_classical["energy_classical_lower"]
-    energy_classical_upper = run_classical["energy_classical_upper"] ### very close to energy_theoretical
+    # energy_classical_upper = run_classical["energy_classical_upper"] ### very close to energy_theoretical
 
-E_minus = energy_classical_lower
+gap = np.abs(energy_theoretical - energy_classical_lower)
+E_minus = energy_theoretical - gap / 2
+E_plus = energy_theoretical + gap / 2
+energy_mid = energy_theoretical
+
+# E_minus = energy_classical_lower
 # E_plus = energy_theoretical + np.abs(energy_theoretical - energy_classical_lower)
-E_plus = 2 * energy_theoretical - energy_classical_lower
+# E_plus = 2 * energy_theoretical - energy_classical_lower
 # energy_mid = (energy_classical_lower + energy_classical_upper) / 2
-energy_mid = energy_theoretical # energy_classical_lower + np.abs(energy_theoretical - energy_classical_lower) / 2
+# energy_mid = energy_theoretical # energy_classical_lower + np.abs(energy_theoretical - energy_classical_lower) / 2
 
 deltas_2d = []
 for N_shots in Ns_shots:
