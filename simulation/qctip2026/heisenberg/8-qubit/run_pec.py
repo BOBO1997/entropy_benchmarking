@@ -65,6 +65,7 @@ for N_shots in Ns_shots:
     for p in ps_dep_global:
         P = 1 - (1 - p) ** num_layers
         dm_depolarised = (1 - P) * dm_theoretical + P * np.identity(2 ** num_qubits) / (2 ** num_qubits)
+        assert dm_depolarised.is_valid()
         variance_base = np.abs((dm_depolarised @ (matrix_Heisenberg ** 2)).trace() - (dm_depolarised @ matrix_Heisenberg).trace() ** 2)
         overhead_pec = (1 + 3/2 * p) ** (2 * num_layers)
         delta = area_gaussian_outside(mu=energy_theoretical,

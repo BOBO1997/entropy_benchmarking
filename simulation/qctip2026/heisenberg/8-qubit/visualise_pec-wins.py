@@ -25,13 +25,13 @@ print(deltas_2d_pec)
 deltas_2d_raw = run_raw["deltas_2d"]
 print(deltas_2d_raw)
 
-heatmap_gap = np.full_like(deltas_2d_pec, fill_value=1, dtype=int)
+heatmap_gap = np.full_like(deltas_2d_pec, fill_value=0, dtype=int)
 
-mask_large = (deltas_2d_pec >= 0.05) & (deltas_2d_raw >= 0.05)
-mask_pec_better = deltas_2d_pec < deltas_2d_raw
+mask_both_fail = (deltas_2d_pec >= 0.05) & (deltas_2d_raw >= 0.05)
+mask_pec_wins = deltas_2d_pec < deltas_2d_raw
 
-heatmap_gap[mask_pec_better] = 0
-heatmap_gap[mask_large] = -1
+heatmap_gap[mask_pec_wins] = 1
+heatmap_gap[mask_both_fail] = -1
 
 plt.close('all')
 fig, ax = plt.subplots(
