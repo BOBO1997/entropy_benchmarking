@@ -28,35 +28,68 @@ print(deltas_2d_raw)
 deltas_3d_pec = run_raw_pec["deltas_3d_pec"]
 print(deltas_3d_pec)
 
+# ================================
+# Parameters for classification
+# ================================
+delta_threshold = 0.05           # success / fail threshold
+eps_relative = 1e-6              # relative tolerance for "almost equal"
+
+
 for ith_Gamma_allowed, Gamma_allowed in enumerate(Gammas_allowed):
-    eps_equal = 1e-12
 
-    heatmap_gap = np.full_like(
-        deltas_3d_pec[:, :, ith_Gamma_allowed],
-        fill_value=0.0,      # float にする（0.5 を入れるため）
-        dtype=float
+    deltas_2d_pec = deltas_3d_pec[:, :, ith_Gamma_allowed]
+
+    # heatmap encoding:
+    #  -1.0 : both fail
+    #   0.0 : raw wins
+    #   0.5 : almost equal (both succeed)
+    #   1.0 : PEC wins
+    heatmap_gap = np.zeros_like(deltas_2d_raw, dtype=float)
+
+    # ----------------------------
+    # Masks
+    # ----------------------------
+
+    # (1) both fail
+    mask_both_fail = (
+        (deltas_2d_raw >= delta_threshold) &
+        (deltas_2d_pec >= delta_threshold)
     )
 
-    delta_pec = deltas_3d_pec[:, :, ith_Gamma_allowed]
-    delta_raw = deltas_2d_raw
-
-    # ① 両方 fail
-    mask_both_fail = (delta_pec >= 0.05) & (delta_raw >= 0.05)
-
-    # ② 両方 success & almost equal
-    mask_both_good_close = (
-        (delta_pec < 0.05)
-        & (delta_raw < 0.05)
-        & (np.abs(delta_pec - delta_raw) <= eps_equal)
+    # (2) both succeed
+    mask_both_succeed = (
+        (deltas_2d_raw < delta_threshold) &
+        (deltas_2d_pec < delta_threshold)
     )
 
-    # ③ PEC wins
-    mask_pec_wins = delta_pec < delta_raw
+    # (3) almost equal (relative comparison, only in success region)
+    mask_almost_equal = (
+        mask_both_succeed &
+        (np.abs(deltas_2d_raw - deltas_2d_pec)
+         <= eps_relative * np.maximum(deltas_2d_raw, deltas_2d_pec))
+    )
 
-    # 適用順序（重要）
-    heatmap_gap[mask_pec_wins] = 1.0
-    heatmap_gap[mask_both_good_close] = 0.5
-    heatmap_gap[mask_both_fail] = -1.0
+    # (4) PEC strictly wins (success region only)
+    mask_pec_wins = (
+        mask_both_succeed &
+        (~mask_almost_equal) &
+        (deltas_2d_pec < deltas_2d_raw)
+    )
+
+    # (5) raw strictly wins (success region only)
+    mask_raw_wins = (
+        mask_both_succeed &
+        (~mask_almost_equal) &
+        (deltas_2d_raw < deltas_2d_pec)
+    )
+
+    # ----------------------------
+    # Apply labels (priority order)
+    # ----------------------------
+    heatmap_gap[mask_both_fail]   = -1.0
+    heatmap_gap[mask_raw_wins]    =  0.0
+    heatmap_gap[mask_almost_equal]=  0.5
+    heatmap_gap[mask_pec_wins]    =  1.0
 
 
     plt.close('all')
