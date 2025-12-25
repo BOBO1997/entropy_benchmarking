@@ -29,13 +29,35 @@ deltas_3d_pec = run_raw_pec["deltas_3d_pec"]
 print(deltas_3d_pec)
 
 for ith_Gamma_allowed, Gamma_allowed in enumerate(Gammas_allowed):
-    heatmap_gap = np.full_like(deltas_3d_pec[:,:,ith_Gamma_allowed], fill_value=0, dtype=int)
+    eps_equal = 1e-12
 
-    mask_both_fail = (deltas_3d_pec[:,:,ith_Gamma_allowed] >= 0.05) & (deltas_2d_raw >= 0.05)
-    mask_pec_wins = deltas_3d_pec[:,:,ith_Gamma_allowed] < deltas_2d_raw
+    heatmap_gap = np.full_like(
+        deltas_3d_pec[:, :, ith_Gamma_allowed],
+        fill_value=0.0,      # float にする（0.5 を入れるため）
+        dtype=float
+    )
 
-    heatmap_gap[mask_pec_wins] = 1
-    heatmap_gap[mask_both_fail] = -1
+    delta_pec = deltas_3d_pec[:, :, ith_Gamma_allowed]
+    delta_raw = deltas_2d_raw
+
+    # ① 両方 fail
+    mask_both_fail = (delta_pec >= 0.05) & (delta_raw >= 0.05)
+
+    # ② 両方 success & almost equal
+    mask_both_good_close = (
+        (delta_pec < 0.05)
+        & (delta_raw < 0.05)
+        & (np.abs(delta_pec - delta_raw) <= eps_equal)
+    )
+
+    # ③ PEC wins
+    mask_pec_wins = delta_pec < delta_raw
+
+    # 適用順序（重要）
+    heatmap_gap[mask_pec_wins] = 1.0
+    heatmap_gap[mask_both_good_close] = 0.5
+    heatmap_gap[mask_both_fail] = -1.0
+
 
     plt.close('all')
     fig, ax = plt.subplots(

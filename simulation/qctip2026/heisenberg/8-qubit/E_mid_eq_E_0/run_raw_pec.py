@@ -66,21 +66,24 @@ energy_mid = energy_theoretical
 
 deltas_2d_raw = []
 deltas_3d_pec = []
+overheads_pec_2d = []
 for N_shots in Ns_shots:
     print("N_shots:", N_shots)
     t1 = time.perf_counter()
 
     deltas_raw = []
     deltas_pec = []
+    overheads_pec = []
     for p in ps_dep_global:
 
-        P = 1 - (1 - p) ** num_layers
+        P = 1 - (1 - p) ** num_layers ### accumulated depolarising level
         dm_depolarised = (1 - P) * dm_theoretical + P * np.identity(2 ** num_qubits) / (2 ** num_qubits)
         assert dm_depolarised.is_valid()
         variance_base = np.abs((dm_depolarised @ (matrix_Heisenberg ** 2)).trace() - (dm_depolarised @ matrix_Heisenberg).trace() ** 2)
         overhead_pec = (1 + 3/2 * p) ** (2 * num_layers)
+        overheads_pec.append(overhead_pec)
 
-        delta_raw = area_gaussian_outside(mu=((1 - p) ** num_layers) * energy_theoretical,
+        delta_raw = area_gaussian_outside(mu=(1 - P) * energy_theoretical,
                                           var=variance_base / N_shots,
                                           E_minus=E_minus,
                                           E_plus=E_plus)
@@ -97,6 +100,7 @@ for N_shots in Ns_shots:
 
     deltas_2d_raw.append(deltas_raw)
     deltas_3d_pec.append(deltas_pec)
+    overheads_pec_2d.append(overheads_pec)
 
     t2 = time.perf_counter()
     print(t2 - t1, "s")
@@ -107,6 +111,7 @@ for N_shots in Ns_shots:
 with open("run_raw_pec.pkl", "wb") as f:
     pickle.dump(obj={"deltas_2d_raw": np.array(deltas_2d_raw),
                      "deltas_3d_pec": np.array(deltas_3d_pec),
+                     "overheads_ped_2d": np.array(overheads_pec_2d),
                      "datetime": datetime.now(ZoneInfo("Europe/Paris")),
                     },
                 file=f)
