@@ -25,23 +25,42 @@ energy_theoretical = run_theoretical["energy_theoretical"]
 deltas_2d_raw = run_raw_pec["deltas_2d_raw"]
 print(deltas_2d_raw)
 
-deltas_2d_pec = run_raw_pec["deltas_2d_pec"]
-print(deltas_2d_pec)
+deltas_3d_pec = run_raw_pec["deltas_3d_pec"]
+print(deltas_3d_pec)
 
-heatmap = np.where(deltas_2d_pec < deltas_2d_raw, 0, 1)
+# ================================
+# Parameters for classification
+# ================================
+delta_threshold = 0.05           # success / fail threshold
+eps_relative = 1e-6              # relative tolerance for "almost equal"
 
-plt.close('all')
-fig, ax = plt.subplots(
-    subplot_kw={"projection": "3d"},
-    dpi=200,
-)
-         
-# Heat map
-fig, ax = plt.subplots()
-im = ax.imshow(deltas_2d_pec,
-               origin="lower")
 
-# Add the color bar
-cbar = ax.figure.colorbar(im, ax = ax)
-cbar.ax.set_ylabel("Color bar", rotation = -90, va = "bottom")
-plt.savefig("heatmap_pec.png")
+for ith_Gamma_allowed, Gamma_allowed in enumerate(Gammas_allowed):
+
+    deltas_2d_pec = deltas_3d_pec[:, :, ith_Gamma_allowed]
+
+    plt.close('all')
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": "3d"},
+        dpi=200,
+    )
+
+    # Heat map
+    fig, ax = plt.subplots()
+    im = ax.imshow(
+        deltas_2d_pec,
+        origin="lower",
+        vmin=-1, 
+        vmax=1,
+        extent=[np.log10(ps_dep_global[0]), np.log10(ps_dep_global[-1]),
+                np.log10(Ns_shots[0]), np.log10(Ns_shots[-1])],
+        aspect="auto",
+    )
+    ax.set_xlabel(r'$\log_{10} p$')
+    ax.set_ylabel(r'$\log_{10} N_{\mathrm{shots}}$')
+
+    # Add the color bar
+    cbar = ax.figure.colorbar(im, ax = ax)
+    cbar.ax.set_ylabel("Color bar", rotation = -90, va = "bottom")
+    # plt.show()
+    plt.savefig("heatmap_pec_gap_"+str(gap)+"_Gamma_allowed_"+str(Gamma_allowed)+".png")

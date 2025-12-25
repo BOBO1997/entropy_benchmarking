@@ -10,7 +10,7 @@ num_layers = 9
 Gammas_allowed = np.array([1.0, 1.1, 1.2, 1.5, 2.0, 3.0, 10.0])
 
 # gap = 1e-1
-gap = 1e-2
+gap = 1e-4
 
 Ns_shots = np.logspace(0, 7, num=71)
 

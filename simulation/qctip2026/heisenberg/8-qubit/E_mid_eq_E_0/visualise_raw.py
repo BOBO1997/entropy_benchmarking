@@ -25,11 +25,6 @@ energy_theoretical = run_theoretical["energy_theoretical"]
 deltas_2d_raw = run_raw_pec["deltas_2d_raw"]
 print(deltas_2d_raw)
 
-deltas_2d_pec = run_raw_pec["deltas_2d_pec"]
-print(deltas_2d_pec)
-
-heatmap = np.where(deltas_2d_pec < deltas_2d_raw, 0, 1)
-
 plt.close('all')
 fig, ax = plt.subplots(
     subplot_kw={"projection": "3d"},
@@ -45,4 +40,4 @@ im = ax.imshow(deltas_2d_raw,
 cbar = ax.figure.colorbar(im, ax = ax)
 cbar.ax.set_ylabel("Color bar", rotation = -90, va = "bottom")
 # plt.show()
-plt.savefig("heatmap_raw.png")
+plt.savefig("heatmap_raw_"+str(gap)+".png")
