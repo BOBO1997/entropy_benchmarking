@@ -39,57 +39,35 @@ for ith_Gamma_allowed, Gamma_allowed in enumerate(Gammas_allowed):
 
     deltas_2d_pec = deltas_3d_pec[:, :, ith_Gamma_allowed]
 
-    # heatmap encoding:
-    #  -1.0 : both fail
-    #   0.0 : raw wins
-    #   0.5 : almost equal (both succeed)
-    #   1.0 : PEC wins
-    heatmap_gap = np.zeros_like(deltas_2d_raw, dtype=float)
+    th  = delta_threshold
+    r   = deltas_2d_raw
+    p   = deltas_2d_pec
 
-    # ----------------------------
-    # Masks
-    # ----------------------------
+    # 初期値：both fail
+    heatmap_gap = np.full_like(r, fill_value=-1.0, dtype=float)
 
-    # (1) both fail
-    mask_both_fail = (
-        (deltas_2d_raw >= delta_threshold) &
-        (deltas_2d_pec >= delta_threshold)
-    )
-
-    # (2) both succeed
-    mask_both_succeed = (
-        (deltas_2d_raw < delta_threshold) &
-        (deltas_2d_pec < delta_threshold)
-    )
-
-    # (3) almost equal (relative comparison, only in success region)
-    mask_almost_equal = (
-        mask_both_succeed &
-        (np.abs(deltas_2d_raw - deltas_2d_pec)
-         <= eps_relative * np.maximum(deltas_2d_raw, deltas_2d_pec))
-    )
-
-    # (4) PEC strictly wins (success region only)
-    mask_pec_wins = (
-        mask_both_succeed &
-        (~mask_almost_equal) &
-        (deltas_2d_pec < deltas_2d_raw)
-    )
-
-    # (5) raw strictly wins (success region only)
+    # at least raw succeeds & raw wins
     mask_raw_wins = (
-        mask_both_succeed &
-        (~mask_almost_equal) &
-        (deltas_2d_raw < deltas_2d_pec)
+        (r < th) &
+        (
+            (p >= th) |      # pec fails
+            (r <= p)         # both succeed & raw no worse (equal included)
+        )
     )
 
-    # ----------------------------
-    # Apply labels (priority order)
-    # ----------------------------
-    heatmap_gap[mask_both_fail]   = -1.0
-    heatmap_gap[mask_raw_wins]    =  0.0
-    heatmap_gap[mask_almost_equal]=  0.5
-    heatmap_gap[mask_pec_wins]    =  1.0
+    # at least pec succeeds & pec wins
+    mask_pec_wins = (
+        (p < th) &
+        (
+            (r >= th) |      # raw fails
+            (p < r)          # both succeed & pec strictly better
+        )
+    )
+
+    # 適用（順序はどちらでもOKだが、fail→wins の順が自然）
+    heatmap_gap[mask_raw_wins] = 0.0
+    heatmap_gap[mask_pec_wins] = 1.0
+
 
 
     plt.close('all')
@@ -100,8 +78,17 @@ for ith_Gamma_allowed, Gamma_allowed in enumerate(Gammas_allowed):
 
     # Heat map
     fig, ax = plt.subplots()
-    im = ax.imshow(heatmap_gap,
-                origin="lower")
+    im = ax.imshow(
+        heatmap_gap,
+        origin="lower",
+        vmin=-1, 
+        vmax=1,
+        extent=[np.log10(ps_dep_global[0]), np.log10(ps_dep_global[-1]),
+                np.log10(Ns_shots[0]), np.log10(Ns_shots[-1])],
+        aspect="auto",
+    )
+    ax.set_xlabel(r'$\log_{10} p$')
+    ax.set_ylabel(r'$\log_{10} N_{\mathrm{shots}}$')
 
     # Add the color bar
     cbar = ax.figure.colorbar(im, ax = ax)
